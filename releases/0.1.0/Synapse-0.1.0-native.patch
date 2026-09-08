@@ -1,0 +1,779 @@
+diff --git a/native/.gitignore b/native/.gitignore
+new file mode 100644
+--- /dev/null
++++ b/native/.gitignore
+@@ -0,0 +1,2 @@
++build/
++.DS_Store
+diff --git a/native/INSTALL.md b/native/INSTALL.md
+new file mode 100644
+--- /dev/null
++++ b/native/INSTALL.md
+@@ -0,0 +1,48 @@
++# Synapse 0.1.0 — iMessage 로컬 테스트
++
++Apple Silicon(M1 이상)용 읽기 전용 알파입니다. macOS 13 이상을 빌드 대상으로 설정했으며 실제 앱 실행 검증은 macOS 26.6.2에서 진행했습니다. 다른 OS 버전은 아직 실기기 검증하지 않았습니다.
++
++## 설치와 연결
++
++1. `Synapse-0.1.0-arm64.dmg`를 열고 **Synapse**를 **Applications(응용 프로그램)** 폴더로 드래그합니다.
++2. 응용 프로그램 폴더에서 Synapse를 실행합니다. 처음에는 합성 샘플 대화만 표시됩니다.
++3. **iMessage 연결**을 누릅니다.
++4. 접근 안내가 나오면 시스템 설정 → 개인정보 보호 및 보안 → 전체 디스크 접근 권한에서 `Synapse.app`을 추가하고 켭니다.
++5. 앱을 완전히 종료한 다음 다시 실행하고 **iMessage 연결**을 누릅니다.
++
++메시지 앱에 이미 동기화된 대화를 읽습니다. SMS/RCS는 iPhone과 Apple 메시지 앱의 전달·동기화 설정에 따라 표시 여부가 다릅니다.
++
++이 앱은 Apple Developer ID로 서명·공증되지 않은 개인 테스트 빌드입니다. macOS가 실행을 차단하면 시스템 설정의 개인정보 보호 및 보안에서 이 앱에 대한 ‘확인 없이 열기’가 제공되는지 확인하세요. 시스템 전체 보안 기능을 끄는 절차는 필요하지 않습니다. 전체 디스크 접근 권한은 사용자가 직접 설정해야 합니다.
++
++## 이번 버전에서 확인할 기능
++
++- 대화 목록과 메시지 열람, 한국어·이모지 표시
++- 최근 최대 2,000개 일반 메시지 안에서 대화/본문 검색
++- 연결 중 5초마다 새로고침, 수동 새로고침(Command-R)
++- 불러온 범위 내 변경·삭제 반영
++- 별도 macOS chat.db 파일 선택
++- 연결 해제 시 읽어온 대화를 제거하고 샘플로 복귀
++
++원본 DB는 읽기 전용으로 엽니다. 대화를 외부로 전송하거나 별도 캐시 파일로 저장하지 않으며 발신 기능이 없습니다. 사용자 메시지 DB에 대한 실제 접근은 아직 테스트하지 않았습니다.
++
++## 알려진 범위
++
++- 모든 과거 대화가 아니라 최근 2,000개 메시지를 대상으로 합니다. 시스템 이벤트와 리액션 행은 제외합니다.
++- 표준 typedstream의 첫 NSString 본문을 해독합니다. 일부 특수 형식은 ‘본문을 표시할 수 없는 메시지’로 표시하며 미지원 건수를 보여줍니다.
++- 첨부파일 다운로드/미리보기, 메시지 발신, 리액션 전송, 연락처 이름 변환은 미지원입니다.
++- 원래 채팅의 편집·삭제 구조에 따라 변경이 완전히 반영되지 않을 수 있습니다. 현재 로드 범위의 원본 행을 다시 읽는 방식입니다.
++- 앱 재실행 후에는 다시 연결해야 합니다. 전체 디스크 접근 권한을 철회하거나 빌드를 교체하면 재설정이 필요할 수 있습니다.
++
++## 수행한 검증
++
++- Swift 데이터 계층: 26개 검사와 잘린/임의 바이너리 입력 검사 통과.
++- 일반/긴/한글/이모지 attributedBody, 최신 메시지 선택, 원본 DB 불변, WAL 신규 행, 편집·삭제, 미지원 형식 처리 검증.
++- 실제 macOS 앱: 샘플 화면·한국어 검색·합성 DB 선택·자동 새로고침·연결 해제·도움말 확인.
++- Apple Silicon 실행 파일, 자체 코드 서명 무결성, DMG 체크섬 확인.
++- 미검증: 사용자 실제 메시지, 실제 전체 디스크 접근 권한 승인/철회, DMG 마운트 및 Applications로의 설치, 다른 macOS 버전. 현재 환경에서 가상 디스크 장치 연결이 제한되어 이미지는 파일 기반으로 생성·검증했습니다.
++
++## 소스
++
++`Synapse-0.1.0-source.zip`에는 `native/` 아래의 SwiftUI 앱·DB 리더·테스트·빌드·패키징 스크립트가 들어 있습니다. `Synapse-0.1.0-native.patch`는 기존 파일을 덮어쓰지 않고 이 디렉터리를 추가합니다.
++
++원본 `/Users/pete/Desktop/playground/2026-synapse`는 현재 작업에서 쓰기가 차단되어 변경하지 않았습니다. 소스와 설치 파일은 Codex 출력 폴더에 제공했습니다.
+diff --git a/native/README.md b/native/README.md
+new file mode 100644
+--- /dev/null
++++ b/native/README.md
+@@ -0,0 +1,37 @@
++# Synapse native local alpha
++
++2026-09-06 · 0.1.0 · iMessage 읽기 전용 macOS 앱.
++
++이번 구현은 바로 설치 가능한 DMG로 iMessage의 실현성을 확인하기 위한 SwiftUI 독립 앱이다. 기존 계획의 Tauri/Rust 멀티플랫폼 통합 앱을 완성한 것은 아니다. 개발 환경에 Rust/Cargo가 없고 Apple Swift 도구가 있어 최초 로컬 테스트 경로로 선택했다. 장기 UI/코어 선택은 실제 메시지 테스트 후 재검토한다.
++
++## 구조
++
++- `Sources/MessageStore.swift`: SQLite 읽기 전용 접근, 제한된 typedstream 본문 해독, 메시지 정규화.
++- `Sources/SynapseApp.swift`: SwiftUI 대화/검색/권한 안내, 비동기 조회, 연결 상태.
++- `Tests/StoreTests.swift`: 임시 합성 DB와 Apple NSArchiver로 만든 테스트 본문. NSArchiver는 fixture 생성에만 사용한다. 앱에는 객체 역직렬화 코드를 포함하지 않는다.
++- `scripts/build.sh`: 앱 번들 생성, 아이콘 생성, ad-hoc 코드 서명 및 검증.
++- `scripts/test.sh`: 네이티브 데이터 계층 검증.
++- `scripts/package.sh`: 장치를 마운트하지 않고 HFS 이미지 생성 후 UDZO DMG 변환·검증.
++- `INSTALL.md`: 사용자 설치 방법, 검증 결과 및 한계.
++
++## 재현
++
++필요 도구: Apple Silicon Mac, Xcode/Command Line Tools의 Swift 컴파일러, macOS 기본 hdiutil/codesign. 외부 패키지 다운로드가 없다. 검증 환경: Swift 6.3.3, macOS 26.6.2. 최소 배포 대상 macOS 13은 실기기 검증 전이다.
++
++프로젝트 루트에서:
++
++```sh
++bash native/scripts/test.sh
++bash native/scripts/build.sh
++bash native/scripts/package.sh
++```
++
++기본 결과: `native/build/Synapse.app`, `native/build/Synapse-0.1.0-arm64.dmg`. 각 스크립트의 첫 인수로 별도 빌드 디렉터리를 지정할 수 있다. 패키징은 먼저 앱을 빌드한다.
++
++## 구현 상태
++
++P0-02의 합성 데이터 읽기/본문 해독과 P0-05의 SwiftUI 대체 경로 패키징을 수행했다. 실제 개인 DB·권한 철회·잠자기/재연결은 아직 미검증이며 iMessage 전체 지원 완료로 표시하지 않는다. Telegram·암호화 검색 저장소·발신·15개 서비스 구현은 포함하지 않는다.
++
++메시지를 디스크에 복제하지 않는 메모리 조회 방식이다. SQLite가 WAL 읽기에 필요한 공유 메모리 잠금을 사용할 수 있으므로 원본 디렉터리 전체의 바이트 불변까지 보장하지 않는다. DB를 immutable로 열거나 원본에 checkpoint를 실행하지 않는다.
++
++제품 UI는 읽기 권한을 필요 시 안내한다. 기본 샘플에서 실제 DB를 자동으로 열지 않으며 발신 기능과 임의 셸 실행 IPC가 없다. 알 수 없는 본문은 추측해 표시하지 않고 미지원으로 표시한다.
+diff --git a/native/Resources/Info.plist b/native/Resources/Info.plist
+new file mode 100644
+--- /dev/null
++++ b/native/Resources/Info.plist
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++<plist version="1.0"><dict>
++<key>CFBundleExecutable</key><string>Synapse</string>
++<key>CFBundleIdentifier</key><string>com.distilledchild.synapse.local</string>
++<key>CFBundleName</key><string>Synapse</string>
++<key>CFBundleDisplayName</key><string>Synapse</string>
++<key>CFBundlePackageType</key><string>APPL</string>
++<key>CFBundleShortVersionString</key><string>0.1.0</string>
++<key>CFBundleVersion</key><string>1</string>
++<key>CFBundleIconFile</key><string>AppIcon</string>
++<key>LSMinimumSystemVersion</key><string>13.0</string>
++<key>LSApplicationCategoryType</key><string>public.app-category.social-networking</string>
++<key>NSHighResolutionCapable</key><true/>
++<key>NSPrincipalClass</key><string>NSApplication</string>
++</dict></plist>
+diff --git a/native/Sources/MessageStore.swift b/native/Sources/MessageStore.swift
+new file mode 100644
+--- /dev/null
++++ b/native/Sources/MessageStore.swift
+@@ -0,0 +1,183 @@
++import Foundation
++import SQLite3
++
++struct ChatMessage: Identifiable, Sendable, Equatable {
++    let id: String
++    let conversationID: String
++    let conversationTitle: String
++    let sender: String
++    let text: String
++    let date: Date?
++    let isFromMe: Bool
++    let bodyUnavailable: Bool
++    let hasAttachment: Bool
++}
++
++struct Conversation: Identifiable {
++    let id: String
++    let title: String
++    let messages: [ChatMessage]
++    var last: ChatMessage { messages[messages.count - 1] }
++}
++
++struct Snapshot: Sendable {
++    let messages: [ChatMessage]
++    let sourceRows: Int
++    let limit: Int
++    var unavailableCount: Int { messages.filter(\.bodyUnavailable).count }
++}
++
++enum StoreError: Error, LocalizedError {
++    case unavailable, schema, query
++    var errorDescription: String? {
++        switch self {
++        case .unavailable: return "메시지 데이터베이스를 열 수 없습니다. 전체 디스크 접근 권한과 파일 위치를 확인해 주세요."
++        case .schema: return "이 데이터베이스의 메시지 형식은 아직 지원하지 않습니다. macOS의 chat.db 파일인지 확인해 주세요."
++        case .query: return "메시지를 읽지 못했습니다. 파일이 사용 중이거나 형식이 다를 수 있습니다. 잠시 후 다시 시도해 주세요."
++        }
++    }
++}
++
++// A bounded extractor for the first NSString in a standard NSAttributedString typedstream.
++// It never constructs archived classes or executes an object unarchiver.
++// Unknown encodings return nil instead of guessing or exposing archive metadata as text.
++enum BodyDecoder {
++    static func text(from data: Data) -> String? {
++        let b = [UInt8](data)
++        let header = Array("streamtyped".utf8)
++        guard b.count >= 20, b.count <= 2_097_152,
++              b[0] == 4, b[1] == 11, Array(b[2..<13]) == header else { return nil }
++        func locate(_ pattern: [UInt8], from start: Int, through end: Int) -> Int? {
++            guard start >= 0, end >= start, pattern.count <= b.count else { return nil }
++            let upper = min(end, b.count - pattern.count)
++            guard start <= upper else { return nil }
++            for i in start...upper {
++                if Array(b[i..<(i + pattern.count)]) == pattern { return i }
++            }
++            return nil
++        }
++        guard locate(Array("NSAttributedString".utf8), from: 13, through: 100) != nil ||
++              locate(Array("NSMutableAttributedString".utf8), from: 13, through: 100) != nil,
++              let stringClass = locate(Array("NSString".utf8), from: 13, through: 160),
++              let marker = locate([0x84, 0x01, 0x2b], from: stringClass + 8, through: stringClass + 32) else { return nil }
++        var p = marker + 3
++        guard p < b.count else { return nil }
++        let tag = b[p]; p += 1
++        let length: Int
++        switch tag {
++        case 0...127: length = Int(tag)
++        case 0x81:
++            guard p + 2 <= b.count else { return nil }
++            length = Int(b[p]) | (Int(b[p + 1]) << 8); p += 2
++        case 0x82:
++            guard p + 4 <= b.count else { return nil }
++            length = (0..<4).reduce(0) { $0 | (Int(b[p + $1]) << ($1 * 8)) }; p += 4
++        default: return nil
++        }
++        guard length <= 1_048_576, p + length < b.count, b[p + length] == 0x86 else { return nil }
++        return String(bytes: b[p..<(p + length)], encoding: .utf8)
++    }
++}
++
++enum MessageStore {
++    static func date(_ raw: Int64) -> Date? {
++        guard raw != 0 else { return nil }
++        let seconds = (raw > 1_000_000_000_000 || raw < -1_000_000_000_000) ? Double(raw) / 1_000_000_000 : Double(raw)
++        return Date(timeIntervalSince1970: seconds + 978_307_200)
++    }
++
++    static func load(path: String, limit: Int = 2000) throws -> Snapshot {
++        guard (1...10000).contains(limit) else { throw StoreError.query }
++        var db: OpaquePointer?
++        guard sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK,
++              let connection = db else { if let db { sqlite3_close(db) }; throw StoreError.unavailable }
++        defer { sqlite3_close(connection) }
++        sqlite3_busy_timeout(connection, 1500)
++        sqlite3_limit(connection, SQLITE_LIMIT_LENGTH, 4_194_304)
++        sqlite3_exec(connection, "PRAGMA query_only=ON", nil, nil, nil)
++        func columns(_ table: String) throws -> Set<String> {
++            var statement: OpaquePointer?
++            guard sqlite3_prepare_v2(connection, "PRAGMA table_info(\(table))", -1, &statement, nil) == SQLITE_OK else { throw StoreError.unavailable }
++            defer { sqlite3_finalize(statement) }
++            var result = Set<String>()
++            while sqlite3_step(statement) == SQLITE_ROW {
++                if let ptr = sqlite3_column_text(statement, 1) { result.insert(String(cString: ptr)) }
++            }
++            return result
++        }
++        let m = try columns("message"), c = try columns("chat"), j = try columns("chat_message_join"), h = try columns("handle")
++        guard Set(["guid", "text", "date", "is_from_me"]).isSubset(of: m), c.contains("guid"),
++              Set(["message_id", "chat_id"]).isSubset(of: j) else { throw StoreError.schema }
++        let rich = m.contains("attributedBody") ? "m.attributedBody" : "NULL"
++        let attachment = m.contains("cache_has_attachments") ? "m.cache_has_attachments" : "0"
++        let display = c.contains("display_name") ? "c.display_name" : "NULL"
++        let identifier = c.contains("chat_identifier") ? "c.chat_identifier" : "NULL"
++        let handles = m.contains("handle_id") && h.contains("id")
++        let sender = handles ? "h.id" : "NULL"
++        let handleJoin = handles ? "LEFT JOIN handle h ON h.ROWID=m.handle_id" : ""
++        var filters = ["1=1"]
++        if m.contains("associated_message_type") { filters.append("COALESCE(associated_message_type,0)=0") }
++        if m.contains("item_type") { filters.append("COALESCE(item_type,0)=0") }
++        let sql = """
++        WITH page AS (SELECT ROWID AS source_id,* FROM message WHERE \(filters.joined(separator: " AND ")) ORDER BY ROWID DESC LIMIT ?)
++        SELECT m.source_id,m.guid,m.text,m.date,m.is_from_me,\(rich),\(attachment),
++               c.ROWID,c.guid,\(display),\(identifier),\(sender)
++        FROM page m LEFT JOIN chat_message_join j ON j.message_id=m.source_id
++        LEFT JOIN chat c ON c.ROWID=j.chat_id \(handleJoin)
++        ORDER BY m.date,m.source_id,c.ROWID
++        """
++        var statement: OpaquePointer?
++        guard sqlite3_prepare_v2(connection, sql, -1, &statement, nil) == SQLITE_OK else { throw StoreError.query }
++        defer { sqlite3_finalize(statement) }
++        sqlite3_bind_int(statement, 1, Int32(limit))
++        func string(_ column: Int32) -> String? {
++            guard let ptr = sqlite3_column_text(statement, column) else { return nil }
++            return String(cString: ptr)
++        }
++        var messages = [ChatMessage](), seen = Set<String>(), rows = Set<Int64>()
++        while true {
++            let code = sqlite3_step(statement)
++            if code == SQLITE_DONE { break }
++            guard code == SQLITE_ROW else { throw StoreError.query }
++            let row = sqlite3_column_int64(statement, 0)
++            rows.insert(row)
++            let chatID = string(8) ?? "local-chat:\(sqlite3_column_int64(statement, 7))"
++            let originalID = string(1) ?? "local-message:\(row)"
++            let id = "\(chatID.utf8.count):\(chatID)\(originalID)"
++            guard seen.insert(id).inserted else { continue }
++            var body = string(2)
++            let blobSize = Int(sqlite3_column_bytes(statement, 5))
++            let richExists = blobSize > 0
++            if body?.isEmpty != false, blobSize <= 2_097_152, let ptr = sqlite3_column_blob(statement, 5), richExists {
++                body = BodyDecoder.text(from: Data(bytes: ptr, count: blobSize))
++            }
++            let hasAttachment = sqlite3_column_int(statement, 6) != 0 || body?.contains("\u{fffc}") == true
++            body = body?.replacingOccurrences(of: "\u{fffc}", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
++            let unavailable = body?.isEmpty != false && richExists
++            let rendered = body?.isEmpty == false ? body! : (hasAttachment ? "첨부파일" : "본문을 표시할 수 없는 메시지")
++            let title = [string(9), string(10), string(11), string(8)].compactMap { $0 }.first { !$0.isEmpty } ?? "알 수 없는 대화"
++            messages.append(ChatMessage(id: id, conversationID: chatID, conversationTitle: title,
++                sender: string(11) ?? "상대방", text: rendered, date: date(sqlite3_column_int64(statement, 3)),
++                isFromMe: sqlite3_column_int(statement, 4) != 0, bodyUnavailable: unavailable, hasAttachment: hasAttachment))
++        }
++        return Snapshot(messages: messages, sourceRows: rows.count, limit: limit)
++    }
++
++    static var demo: Snapshot {
++        let now = Date()
++        let values: [(String, String, String, Bool, Int)] = [
++            ("team", "Synapse 프로젝트", "첫 번째 iMessage 인박스에 오신 것을 환영합니다.", false, -3400),
++            ("team", "Synapse 프로젝트", "대화가 한곳에 모이니 훨씬 편하네요. 👋", true, -3200),
++            ("team", "Synapse 프로젝트", "왼쪽에서 대화를 선택하고, 위에서 메시지를 검색해 보세요.", false, -3000),
++            ("weekend", "주말 약속", "토요일 오후에 커피 한 잔 할까요? ☕️", false, -1700),
++            ("weekend", "주말 약속", "좋아요! 두 시에 만나요.", true, -1500),
++            ("family", "가족", "오늘 저녁은 함께 먹어요 🍲", false, -600),
++            ("family", "가족", "7시쯤 도착할게요!", true, -400),
++            ("team", "Synapse 프로젝트", "이 화면은 샘플입니다. 실제 대화는 ‘iMessage 연결’을 누른 후에만 읽습니다.", false, -10)
++        ]
++        return Snapshot(messages: values.enumerated().map { index, v in
++            ChatMessage(id: "demo-\(index)", conversationID: v.0, conversationTitle: v.1, sender: v.1,
++                text: v.2, date: now.addingTimeInterval(Double(v.4)), isFromMe: v.3, bodyUnavailable: false, hasAttachment: false)
++        }, sourceRows: values.count, limit: 2000)
++    }
++}
+diff --git a/native/Sources/SynapseApp.swift b/native/Sources/SynapseApp.swift
+new file mode 100644
+--- /dev/null
++++ b/native/Sources/SynapseApp.swift
+@@ -0,0 +1,273 @@
++import SwiftUI
++import AppKit
++import UniformTypeIdentifiers
++
++@MainActor
++final class InboxModel: ObservableObject {
++    @Published var snapshot = MessageStore.demo
++    @Published var selectedID: String? = "team"
++    @Published var search = ""
++    @Published var isDemo = true
++    @Published var isLoading = false
++    @Published var error: String?
++    @Published var lastUpdated: Date?
++    @Published var autoRefresh = true
++    private var path: String?
++    private var generation = 0
++    private var timer: Timer?
++
++    init() {
++        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
++            Task { @MainActor [weak self] in
++                guard let self, self.autoRefresh, !self.isDemo, !self.isLoading else { return }
++                self.refresh()
++            }
++        }
++    }
++    var conversations: [Conversation] {
++        Dictionary(grouping: snapshot.messages, by: \.conversationID).map { key, messages in
++            Conversation(id: key, title: messages.last!.conversationTitle, messages: messages)
++        }.filter { search.isEmpty || $0.title.localizedCaseInsensitiveContains(search) || $0.messages.contains { $0.text.localizedCaseInsensitiveContains(search) } }
++        .sorted { ($0.last.date ?? .distantPast) > ($1.last.date ?? .distantPast) }
++    }
++    var selected: Conversation? { conversations.first { $0.id == selectedID } }
++    func connect(path: String? = nil) {
++        generation += 1
++        self.path = path ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Messages/chat.db").path
++        isDemo = false
++        snapshot = Snapshot(messages: [], sourceRows: 0, limit: 2000)
++        selectedID = nil
++        error = nil
++        lastUpdated = nil
++        refresh()
++    }
++    func refresh() {
++        guard let path else { return }
++        generation += 1
++        let token = generation
++        isLoading = true
++        Task {
++            let result = await Task.detached(priority: .userInitiated) { () -> Result<Snapshot, Error> in
++                Result { try MessageStore.load(path: path) }
++            }.value
++            guard token == generation else { return }
++            isLoading = false
++            switch result {
++            case .success(let value):
++                snapshot = value; error = nil; lastUpdated = Date()
++                if !conversations.contains(where: { $0.id == selectedID }) { selectedID = conversations.first?.id }
++            case .failure(let failure):
++                snapshot = Snapshot(messages: [], sourceRows: 0, limit: 2000)
++                selectedID = nil
++                error = failure.localizedDescription
++            }
++        }
++    }
++    func disconnect() {
++        generation += 1; path = nil; isLoading = false; error = nil; isDemo = true
++        snapshot = MessageStore.demo; selectedID = "team"; search = ""; lastUpdated = nil
++    }
++    func chooseDatabase() {
++        let panel = NSOpenPanel()
++        panel.title = "메시지 데이터베이스 선택"
++        panel.message = "읽기 권한이 있는 macOS chat.db 파일을 선택하세요. 원본에는 쓰지 않습니다."
++        panel.canChooseDirectories = false; panel.allowsMultipleSelection = false
++        if panel.runModal() == .OK, let url = panel.url { connect(path: url.path) }
++    }
++    func openPrivacy() {
++        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") { NSWorkspace.shared.open(url) }
++    }
++}
++
++struct InboxView: View {
++    @StateObject private var model = InboxModel()
++    @State private var showHelp = false
++    private let accent = Color(red: 0.43, green: 0.34, blue: 0.88)
++    var body: some View {
++        NavigationSplitView {
++            VStack(alignment: .leading, spacing: 0) {
++                HStack(spacing: 10) {
++                    Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 24)).foregroundStyle(accent)
++                    VStack(alignment: .leading, spacing: 2) {
++                        Text("Synapse").font(.system(size: 23, weight: .bold, design: .rounded))
++                        Text("모든 대화의 시작").font(.caption).foregroundStyle(.secondary)
++                    }
++                }.padding(20)
++                HStack {
++                    Label("iMessage", systemImage: "message.fill").font(.headline)
++                    Spacer()
++                    Text(model.isDemo ? "샘플" : model.error == nil ? "연결됨" : "연결 필요")
++                        .font(.caption2.bold()).padding(.horizontal, 8).padding(.vertical, 4)
++                        .background(accent.opacity(0.12), in: Capsule()).foregroundStyle(accent)
++                }.padding(.horizontal, 20).padding(.bottom, 12)
++                TextField("대화·메시지 검색", text: $model.search)
++                    .textFieldStyle(.roundedBorder).padding(.horizontal, 16).padding(.bottom, 12)
++                List(selection: $model.selectedID) {
++                    ForEach(model.conversations) { conversation in
++                        HStack(alignment: .top, spacing: 11) {
++                            ZStack {
++                                Circle().fill(accent.opacity(0.12)).frame(width: 36, height: 36)
++                                Text(String(conversation.title.prefix(1))).font(.headline).foregroundStyle(accent)
++                            }
++                            VStack(alignment: .leading, spacing: 5) {
++                                Text(conversation.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
++                                Text(conversation.last.text).font(.system(size: 12)).foregroundStyle(.secondary).lineLimit(2)
++                            }
++                            Spacer(minLength: 0)
++                        }.padding(.vertical, 7).tag(conversation.id)
++                    }
++                }.listStyle(.sidebar)
++                Divider()
++                VStack(alignment: .leading, spacing: 10) {
++                    if model.isDemo {
++                        Button { model.connect() } label: {
++                            Label("iMessage 연결", systemImage: "link").frame(maxWidth: .infinity)
++                        }.buttonStyle(.borderedProminent).tint(accent).controlSize(.large)
++                    } else {
++                        HStack {
++                            Toggle("자동 새로고침", isOn: $model.autoRefresh).toggleStyle(.switch).controlSize(.mini)
++                            Spacer()
++                            Button("연결 해제") { model.disconnect() }.font(.caption)
++                        }
++                    }
++                    HStack {
++                        Label("이 Mac에서만 처리", systemImage: "lock.shield").font(.caption).foregroundStyle(.secondary)
++                        Spacer()
++                        Button { showHelp = true } label: { Image(systemName: "questionmark.circle") }.buttonStyle(.plain)
++                    }
++                }.padding(16)
++            }.navigationSplitViewColumnWidth(min: 260, ideal: 300, max: 380)
++        } detail: {
++            VStack(spacing: 0) {
++                if model.isDemo {
++                    HStack {
++                        Image(systemName: "sparkles")
++                        Text("샘플 대화입니다. iMessage를 연결하면 실제 대화를 읽어옵니다.")
++                        Spacer()
++                    }.font(.callout).padding(14).background(accent.opacity(0.08))
++                }
++                if let error = model.error {
++                    permissionView(error)
++                } else if model.isLoading && model.snapshot.messages.isEmpty {
++                    Spacer(); ProgressView("메시지를 읽고 있습니다…"); Spacer()
++                } else if let conversation = model.selected {
++                    conversationView(conversation)
++                } else {
++                    Spacer()
++                    Image(systemName: "bubble.left.and.text.bubble.right").font(.system(size: 48)).foregroundStyle(accent.opacity(0.6))
++                    Text(model.search.isEmpty ? "표시할 대화가 없습니다" : "검색 결과가 없습니다").font(.title2.bold()).padding(.top, 12)
++                    Text(model.search.isEmpty ? "메시지 앱의 동기화 상태를 확인하거나 다른 데이터베이스를 선택하세요." : "검색은 불러온 최근 메시지 안에서 수행됩니다.")
++                        .foregroundStyle(.secondary).padding().multilineTextAlignment(.center)
++                    Spacer()
++                }
++                Divider()
++                HStack(spacing: 12) {
++                    Circle().fill(model.error != nil ? Color.orange : model.isDemo ? Color.gray : Color.green).frame(width: 6, height: 6)
++                    Text(model.isDemo ? "샘플 \(model.snapshot.sourceRows)개" : "최근 \(model.snapshot.sourceRows)개 메시지 · 최대 \(model.snapshot.limit)개")
++                    if model.snapshot.unavailableCount > 0 { Text("본문 미지원 \(model.snapshot.unavailableCount)개").foregroundStyle(.orange) }
++                    Spacer()
++                    if model.isLoading { ProgressView().controlSize(.small) }
++                    if let date = model.lastUpdated { Text(date, style: .time) }
++                    Text("읽기 전용 · 로컬 알파").foregroundStyle(.secondary)
++                }.font(.caption).foregroundStyle(.secondary).padding(12)
++            }.frame(minWidth: 540)
++        }
++        .frame(minWidth: 900, minHeight: 620)
++        .toolbar {
++            ToolbarItemGroup {
++                Button { model.chooseDatabase() } label: { Label("DB 선택", systemImage: "folder") }.help("다른 chat.db 파일 선택")
++                Button { model.refresh() } label: { Label("새로고침", systemImage: "arrow.clockwise") }
++                    .disabled(model.isDemo || model.isLoading).keyboardShortcut("r", modifiers: .command)
++                Button { showHelp = true } label: { Label("도움말", systemImage: "info.circle") }
++            }
++        }
++        .sheet(isPresented: $showHelp) { helpView }
++        .onChange(of: model.search) { _ in
++            if !model.conversations.contains(where: { $0.id == model.selectedID }) { model.selectedID = model.conversations.first?.id }
++        }
++    }
++    private func permissionView(_ message: String) -> some View {
++        VStack(alignment: .leading, spacing: 20) {
++            Spacer()
++            Image(systemName: "lock.shield").font(.system(size: 44)).foregroundStyle(accent)
++            Text("메시지 접근을 허용해 주세요").font(.title.bold())
++            Text(message).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
++            VStack(alignment: .leading, spacing: 12) {
++                Text("1. Synapse를 응용 프로그램 폴더로 옮겨 실행하세요.")
++                Text("2. 시스템 설정 → 개인정보 보호 및 보안 → 전체 디스크 접근 권한에서 Synapse를 추가하고 켜세요.")
++                Text("3. Synapse를 완전히 종료한 뒤 다시 열고, iMessage를 연결하세요.")
++            }.font(.callout)
++            HStack {
++                Button("시스템 설정 열기") { model.openPrivacy() }.buttonStyle(.borderedProminent).tint(accent)
++                Button("다시 시도") { model.refresh() }
++                Button("샘플로 돌아가기") { model.disconnect() }
++            }
++            Text("메시지 원본은 변경하지 않습니다. 권한을 켜도 자동으로 발신하지 않습니다.").font(.caption).foregroundStyle(.secondary)
++            Spacer()
++        }.padding(44).frame(maxWidth: 720, maxHeight: .infinity)
++    }
++    private func conversationView(_ conversation: Conversation) -> some View {
++        VStack(spacing: 0) {
++            HStack {
++                VStack(alignment: .leading, spacing: 4) {
++                    Text(conversation.title).font(.title2.bold()).textSelection(.enabled)
++                    Text("iMessage · 불러온 메시지 \(conversation.messages.count)개").font(.caption).foregroundStyle(.secondary)
++                }
++                Spacer()
++                Image(systemName: "message.fill").foregroundStyle(.green).font(.title2)
++            }.padding(24)
++            Divider()
++            ScrollViewReader { proxy in
++                ScrollView {
++                    LazyVStack(spacing: 16) {
++                        ForEach(conversation.messages.filter { model.search.isEmpty || conversation.title.localizedCaseInsensitiveContains(model.search) || $0.text.localizedCaseInsensitiveContains(model.search) }) { message in
++                            HStack(alignment: .bottom) {
++                                if message.isFromMe { Spacer(minLength: 70) }
++                                VStack(alignment: message.isFromMe ? .trailing : .leading, spacing: 5) {
++                                    if !message.isFromMe { Text(message.sender).font(.caption2).foregroundStyle(.secondary).lineLimit(1) }
++                                    VStack(alignment: .leading, spacing: 7) {
++                                        Text(message.text).font(.system(size: 14)).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
++                                        if message.hasAttachment { Label("첨부 미리보기는 다음 버전에 제공됩니다", systemImage: "paperclip").font(.caption2) }
++                                        if message.bodyUnavailable { Label("지원하지 않는 본문 형식", systemImage: "exclamationmark.circle").font(.caption2) }
++                                    }.padding(.horizontal, 16).padding(.vertical, 12)
++                                        .foregroundStyle(message.isFromMe ? Color.white : Color.primary)
++                                        .background(message.isFromMe ? accent : Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 17))
++                                    if let date = message.date { Text(date.formatted(date: .abbreviated, time: .shortened)).font(.caption2).foregroundStyle(.secondary) }
++                                }.frame(maxWidth: 540, alignment: message.isFromMe ? .trailing : .leading)
++                                if !message.isFromMe { Spacer(minLength: 70) }
++                            }.id(message.id)
++                        }
++                    }.padding(24)
++                }
++                .onChange(of: conversation.id) { _ in if let last = conversation.messages.last, model.search.isEmpty { proxy.scrollTo(last.id, anchor: .bottom) } }
++                .onAppear { if let last = conversation.messages.last, model.search.isEmpty { proxy.scrollTo(last.id, anchor: .bottom) } }
++            }
++            HStack {
++                Image(systemName: "eye")
++                Text("읽기 전용 테스트판입니다. 답장은 메시지 앱에서 보내세요.")
++                Spacer()
++                Button("메시지 앱 열기") { if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.MobileSMS") { NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration()) } }
++            }.font(.caption).foregroundStyle(.secondary).padding(16)
++        }
++    }
++    private var helpView: some View {
++        VStack(alignment: .leading, spacing: 18) {
++            Text("Synapse 로컬 테스트 안내").font(.title2.bold())
++            Text("iMessage의 최근 2,000개 메시지를 읽고, 대화별로 확인하고 검색합니다. 연결 중에는 5초마다 갱신합니다.")
++            Text("본문과 대화는 메모리에서만 처리합니다. 별도 대화 캐시나 외부 서버 전송은 없습니다. 연결 해제 시 불러온 대화를 지웁니다.")
++            Text("일반 텍스트와 표준 attributedBody 문자열을 지원합니다. 일부 특수 메시지·본문 형식, 첨부 미리보기, 답장·리액션 전송은 아직 지원하지 않습니다.")
++            Text("SMS·RCS 표시 여부는 Apple 메시지 앱의 동기화 및 iPhone 전달 설정에 따라 달라집니다. 이 앱은 메시지 앱이 가진 데이터만 읽습니다.")
++            Text("개인 개발용 서명으로 만든 공증되지 않은 Apple Silicon 테스트판입니다.").font(.caption).foregroundStyle(.secondary)
++            HStack { Spacer(); Button("확인") { showHelp = false }.keyboardShortcut(.defaultAction) }
++        }.padding(30).frame(width: 570)
++    }
++}
++
++@main
++struct SynapseApp: App {
++    var body: some Scene {
++        WindowGroup("Synapse") { InboxView().tint(Color(red: 0.43, green: 0.34, blue: 0.88)) }
++            .defaultSize(width: 1120, height: 760)
++            .commands { CommandGroup(replacing: .newItem) {} }
++    }
++}
+diff --git a/native/Tests/StoreTests.swift b/native/Tests/StoreTests.swift
+new file mode 100644
+--- /dev/null
++++ b/native/Tests/StoreTests.swift
+@@ -0,0 +1,93 @@
++import Foundation
++import SQLite3
++
++@main
++struct Tests {
++    static func main() throws {
++        setbuf(stdout, nil)
++        var checks = 0
++        func check(_ value: @autoclosure () -> Bool, _ label: String) {
++            guard value() else { fatalError("FAIL: \(label)") }
++            checks += 1
++            print("PASS: \(label)")
++        }
++        let root = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("synapse-tests-\(UUID().uuidString)")
++        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
++        defer { try? FileManager.default.removeItem(at: root) }
++        let path = root.appendingPathComponent("메시지 #?.db").path
++        var writer: OpaquePointer?
++        check(sqlite3_open(path, &writer) == SQLITE_OK, "fixture creation")
++        defer { sqlite3_close(writer) }
++        func sql(_ text: String) throws {
++            guard sqlite3_exec(writer, text, nil, nil, nil) == SQLITE_OK else { throw StoreError.query }
++        }
++        try sql("""
++        CREATE TABLE message(guid TEXT,text TEXT,date INTEGER,is_from_me INTEGER,attributedBody BLOB,
++        cache_has_attachments INTEGER,handle_id INTEGER,associated_message_type INTEGER,item_type INTEGER);
++        CREATE TABLE chat(guid TEXT,display_name TEXT,chat_identifier TEXT);
++        CREATE TABLE chat_message_join(chat_id INTEGER,message_id INTEGER);
++        CREATE TABLE handle(id TEXT);
++        INSERT INTO handle VALUES('테스트 상대');
++        INSERT INTO chat VALUES('c1','합성 대화','chat-1'),('c2','','chat-2');
++        INSERT INTO message VALUES('m1','hello',800000000000000000,0,NULL,0,1,0,0);
++        INSERT INTO message VALUES('m2',NULL,800000001000000000,1,NULL,1,1,0,0);
++        INSERT INTO chat_message_join VALUES(1,1),(1,1),(2,1),(1,2);
++        """)
++        let before = try Data(contentsOf: URL(fileURLWithPath: path))
++        let snapshot = try MessageStore.load(path: path)
++        check(snapshot.sourceRows == 2 && snapshot.messages.count == 3, "duplicate joins deduplicated, multiple conversations retained")
++        check(snapshot.messages.first?.sender == "테스트 상대", "sender mapping")
++        check(snapshot.messages.last?.text == "첨부파일", "attachment-only placeholder")
++        check(snapshot.messages.last?.isFromMe == true, "outgoing direction")
++        let after = try Data(contentsOf: URL(fileURLWithPath: path))
++        check(before == after, "source DB bytes unchanged")
++        let page = try MessageStore.load(path: path, limit: 1)
++        check(page.sourceRows == 1 && page.messages.first?.id.hasSuffix("m2") == true, "latest source-row pagination")
++        let missing = root.appendingPathComponent("missing.db").path
++        do { _ = try MessageStore.load(path: missing); fatalError("created missing DB") } catch { checks += 1 }
++        check(!FileManager.default.fileExists(atPath: missing), "missing DB not created")
++        check(MessageStore.date(800000000000000000) == MessageStore.date(800000000), "nanosecond and legacy second dates")
++        check(MessageStore.date(0) == nil, "unknown date")
++        check(MessageStore.date(Int64.min) != nil, "extreme timestamp does not overflow")
++        for text in ["안녕하세요 Hello 🌍", "", String(repeating: "가🌍", count: 500), String(repeating: "X", count: 70000)] {
++            let encoded = NSArchiver.archivedData(withRootObject: NSAttributedString(string: text))
++            check(BodyDecoder.text(from: encoded) == text, "native typedstream UTF-8 length \(text.utf8.count)")
++        }
++        let mutable = NSMutableAttributedString(string: "mutable 메시지")
++        let mutableData = NSArchiver.archivedData(withRootObject: mutable)
++        check(BodyDecoder.text(from: mutableData) == mutable.string, "mutable attributed string")
++        let encoded = NSArchiver.archivedData(withRootObject: NSAttributedString(string: "본문 해독 테스트"))
++        for size in 0..<encoded.count {
++            _ = BodyDecoder.text(from: encoded.prefix(size))
++        }
++        check(BodyDecoder.text(from: Data([0,1,2])) == nil, "unknown encoding rejected")
++        check(BodyDecoder.text(from: Data([4,11]) + Data("streamtyped".utf8) + Data(repeating: 0, count: 7)) == nil, "short valid header bounds")
++        let hex = encoded.map { String(format: "%02x", $0) }.joined()
++        try sql("INSERT INTO message VALUES('m3',NULL,800000002000000000,0,X'\(hex)',0,1,0,0); INSERT INTO chat_message_join VALUES(1,3);")
++        let decoded = try MessageStore.load(path: path)
++        check(decoded.messages.last?.text == "본문 해독 테스트" && decoded.unavailableCount == 0, "attributed body integrated with DB reader")
++        try sql("INSERT INTO message VALUES('tapback','reaction',800000003000000000,0,NULL,0,1,2000,0);")
++        let reactions = try MessageStore.load(path: path)
++        check(reactions.sourceRows == 3, "reaction events excluded")
++        let oldCount = try MessageStore.load(path: path).sourceRows
++        try sql("PRAGMA journal_mode=WAL;")
++        try sql("INSERT INTO message VALUES('wal','new row',800000004000000000,0,NULL,0,1,0,0);")
++        let wal = try MessageStore.load(path: path)
++        check(wal.sourceRows == oldCount + 1, "live WAL reads committed new messages")
++        try sql("UPDATE message SET text='edited' WHERE guid='wal';")
++        let edited = try MessageStore.load(path: path)
++        check(edited.messages.last?.text == "edited", "refresh reflects edits in loaded window")
++        try sql("DELETE FROM message WHERE guid='wal';")
++        let deleted = try MessageStore.load(path: path)
++        check(deleted.sourceRows == oldCount, "refresh reflects deletion in loaded window")
++        try sql("INSERT INTO message VALUES('unknown',NULL,800000005000000000,0,X'000102',0,1,0,0);")
++        let unknown = try MessageStore.load(path: path)
++        check(unknown.unavailableCount == 1, "unsupported body visible to user")
++        let emptyPath = root.appendingPathComponent("empty.db").path
++        var empty: OpaquePointer?; sqlite3_open(emptyPath, &empty); sqlite3_close(empty)
++        do { _ = try MessageStore.load(path: emptyPath); fatalError("accepted unsupported schema") } catch StoreError.schema { checks += 1 }
++        // Also verify bounded extraction never traps on arbitrary binary input.
++        for length in 0..<512 { _ = BodyDecoder.text(from: Data((0..<length).map { _ in UInt8.random(in: 0...255) })) }
++        print("SUCCESS: \(checks) checks plus truncation and random-input decoder checks")
++    }
++}
+diff --git a/native/scripts/build.sh b/native/scripts/build.sh
+new file mode 100644
+--- /dev/null
++++ b/native/scripts/build.sh
+@@ -0,0 +1,12 @@
++#!/bin/bash
++set -euo pipefail
++source_root="$(cd "$(dirname "$0")/.." && pwd)"
++build_root="${1:-$source_root/build}"
++mkdir -p "$build_root/module-cache" "$build_root/Synapse.app/Contents/MacOS" "$build_root/Synapse.app/Contents/Resources"
++swiftc -module-cache-path "$build_root/module-cache" -target arm64-apple-macosx13.0 -O -parse-as-library \
++    "$source_root/Sources/MessageStore.swift" "$source_root/Sources/SynapseApp.swift" \
++    -o "$build_root/Synapse.app/Contents/MacOS/Synapse" -framework SwiftUI -framework AppKit -lsqlite3
++cp "$source_root/Resources/Info.plist" "$build_root/Synapse.app/Contents/Info.plist"
++swift -module-cache-path "$build_root/module-cache" "$source_root/scripts/make-icon.swift" "$build_root/AppIcon.iconset" "$build_root/Synapse.app/Contents/Resources/AppIcon.icns"
++codesign --force --sign - --timestamp=none "$build_root/Synapse.app"
++codesign --verify --deep --strict "$build_root/Synapse.app"
+diff --git a/native/scripts/make-icon.swift b/native/scripts/make-icon.swift
+new file mode 100644
+--- /dev/null
++++ b/native/scripts/make-icon.swift
+@@ -0,0 +1,39 @@
++import AppKit
++let output = URL(fileURLWithPath: CommandLine.arguments[1])
++try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
++var chunks = Data()
++func sizeBytes(_ size:Int) -> Data { var value = UInt32(size).bigEndian; return withUnsafeBytes(of:&value) { Data($0) } }
++for size in [16,32,64,128,256,512,1024] {
++    let s = CGFloat(size)
++    let bitmap = NSBitmapImageRep(bitmapDataPlanes:nil, pixelsWide:size, pixelsHigh:size, bitsPerSample:8, samplesPerPixel:4, hasAlpha:true, isPlanar:false, colorSpaceName:.deviceRGB, bytesPerRow:0, bitsPerPixel:0)!
++    NSGraphicsContext.saveGraphicsState()
++    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep:bitmap)
++    let rect = NSRect(x:s*0.05,y:s*0.05,width:s*0.9,height:s*0.9)
++    let bg = NSBezierPath(roundedRect:rect,xRadius:s*0.21,yRadius:s*0.21)
++    NSGradient(starting:NSColor(red:0.49,green:0.39,blue:0.94,alpha:1),ending:NSColor(red:0.25,green:0.19,blue:0.66,alpha:1))!.draw(in:bg,angle:-60)
++    NSColor.white.withAlphaComponent(0.40).setFill()
++    NSBezierPath(roundedRect:NSRect(x:s*0.38,y:s*0.24,width:s*0.4,height:s*0.35),xRadius:s*0.11,yRadius:s*0.11).fill()
++    NSColor.white.setFill()
++    NSBezierPath(roundedRect:NSRect(x:s*0.20,y:s*0.40,width:s*0.49,height:s*0.37),xRadius:s*0.11,yRadius:s*0.11).fill()
++    let tail = NSBezierPath(); tail.move(to:NSPoint(x:s*0.28,y:s*0.45)); tail.line(to:NSPoint(x:s*0.26,y:s*0.32)); tail.line(to:NSPoint(x:s*0.43,y:s*0.43)); tail.close(); tail.fill()
++    NSColor(red:0.46,green:0.36,blue:0.86,alpha:1).setFill()
++    for x in [0.32,0.44,0.56] { NSBezierPath(ovalIn:NSRect(x:s*x,y:s*0.56,width:s*0.045,height:s*0.045)).fill() }
++    NSGraphicsContext.restoreGraphicsState()
++    let data = bitmap.representation(using:.png,properties:[:])!
++    let names: [String]
++    switch size {
++    case 16: names=["icon_16x16.png"]
++    case 32: names=["icon_16x16@2x.png","icon_32x32.png"]
++    case 64: names=["icon_32x32@2x.png"]
++    case 128: names=["icon_128x128.png"]
++    case 256: names=["icon_128x128@2x.png","icon_256x256.png"]
++    case 512: names=["icon_256x256@2x.png","icon_512x512.png"]
++    default: names=["icon_512x512@2x.png"]
++    }
++    for name in names { try data.write(to:output.appendingPathComponent(name)) }
++    let types = [16:"icp4",32:"icp5",64:"icp6",128:"ic07",256:"ic08",512:"ic09",1024:"ic10"]
++    chunks.append(Data(types[size]!.utf8)); chunks.append(sizeBytes(data.count + 8)); chunks.append(data)
++}
++
++var icns = Data("icns".utf8); icns.append(sizeBytes(chunks.count + 8)); icns.append(chunks)
++try icns.write(to:URL(fileURLWithPath:CommandLine.arguments[2]))
+diff --git a/native/scripts/package.sh b/native/scripts/package.sh
+new file mode 100644
+--- /dev/null
++++ b/native/scripts/package.sh
+@@ -0,0 +1,12 @@
++#!/bin/bash
++set -euo pipefail
++source_root="$(cd "$(dirname "$0")/.." && pwd)"
++build_root="${1:-$source_root/build}"
++bash "$source_root/scripts/build.sh" "$build_root"
++stage="$(mktemp -d "$build_root/package.XXXXXX")"
++cp -R "$build_root/Synapse.app" "$stage/Synapse.app"
++cp "$source_root/INSTALL.md" "$stage/READ-ME.md"
++ln -s /Applications "$stage/Applications"
++hdiutil makehybrid -hfs -hfs-volume-name 'Synapse 0.1.0' -o "$stage-volume.dmg" "$stage"
++hdiutil convert "$stage-volume.dmg" -format UDZO -ov -o "$build_root/Synapse-0.1.0-arm64.dmg"
++hdiutil verify "$build_root/Synapse-0.1.0-arm64.dmg"
+diff --git a/native/scripts/test.sh b/native/scripts/test.sh
+new file mode 100644
+--- /dev/null
++++ b/native/scripts/test.sh
+@@ -0,0 +1,9 @@
++#!/bin/bash
++set -euo pipefail
++source_root="$(cd "$(dirname "$0")/.." && pwd)"
++build_root="${1:-$source_root/build}"
++mkdir -p "$build_root/module-cache"
++swiftc -suppress-warnings -module-cache-path "$build_root/module-cache" -target arm64-apple-macosx13.0 \
++    -parse-as-library "$source_root/Sources/MessageStore.swift" "$source_root/Tests/StoreTests.swift" \
++    -o "$build_root/store-tests" -lsqlite3
++"$build_root/store-tests"

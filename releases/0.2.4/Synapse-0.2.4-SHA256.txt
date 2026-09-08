@@ -1,0 +1,4 @@
+eaa04d45fefbf6a092c1f1e150d5c759d22696e21abe317daad762d6d682e6ef  README.md
+1eb81255e5c8b292bed8252665d7b2f6b47f2b1b7ac4fe96d69dbe9bd0a6fdb0  Synapse-0.2.4-arm64.dmg
+86de7b6d7c89e8b62971ae9175a3da0790acb9df8c541efade4d946db35b4677  Synapse-0.2.4-source.zip
+843dc66589df9b2fa8c8b907242a635674e828b72b7ef71ab26cfef3e50b5264  Synapse-local-test-guide.md

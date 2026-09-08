@@ -34,3 +34,6 @@ env/
 *.bed.gz
 *.vcf.gz
 *.h5
+
+# Source bundles distributed with versioned release checksums
+!releases/*/Synapse-*-source.zip

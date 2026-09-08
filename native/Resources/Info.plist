@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>Synapse</string>
+<key>CFBundleIdentifier</key><string>com.distilledchild.synapse.local</string>
+<key>CFBundleName</key><string>Synapse</string>
+<key>CFBundleDisplayName</key><string>Synapse</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>CFBundleShortVersionString</key><string>0.2.10</string>
+<key>CFBundleVersion</key><string>12</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
+<key>LSMinimumSystemVersion</key><string>13.0</string>
+<key>LSApplicationCategoryType</key><string>public.app-category.social-networking</string>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSPrincipalClass</key><string>NSApplication</string>
+<key>NSAppleEventsUsageDescription</key><string>Synapse reads participant names from Apple Messages and sends the text and photos you choose to existing iMessage, SMS, and RCS conversations.</string>
+<key>NSContactsUsageDescription</key><string>Synapse displays saved contact names and initials instead of phone numbers. Your contacts are never changed or uploaded.</string>
+</dict></plist>
