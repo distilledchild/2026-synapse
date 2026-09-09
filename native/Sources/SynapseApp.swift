@@ -5,6 +5,7 @@ import Contacts
 
 struct InboxView: View {
     @ObservedObject var model: InboxModel
+    var detailOnly = false
     var attachmentRoot: URL = AttachmentImageLoader.messagesRoot
     @State private var showHelp = false
     @State private var composerHeight: CGFloat = 32
@@ -15,7 +16,31 @@ struct InboxView: View {
     @Environment(\.scenePhase) private var scenePhase
     private let accent = Color(red: 0.43, green: 0.34, blue: 0.88)
     var body: some View {
-        NavigationSplitView {
+        Group {
+            if detailOnly { detail }
+            else { NavigationSplitView { sidebar } detail: { detail } }
+        }
+        .frame(minWidth: detailOnly ? 540 : 900, minHeight: 620)
+        .toolbar {
+            ToolbarItemGroup {
+                Button { model.chooseDatabase() } label: { Label("Open database", systemImage: "folder") }.help("Choose another chat.db file").disabled(model.isBusy)
+                Button { model.refresh() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                    .disabled(model.isDemo || model.isLoading).keyboardShortcut("r", modifiers: .command)
+                Button { showHelp = true } label: { Label("Help", systemImage: "info.circle") }
+            }
+        }
+        .sheet(isPresented: $showHelp) { helpView }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active { model.refreshContactNames(invalidate: true) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .CNContactStoreDidChange)) { _ in
+            model.refreshContactNames(invalidate: true)
+        }
+        .onChange(of: model.search) { _ in
+            if !model.conversations.contains(where: { $0.id == model.selectedID }) { model.selectedID = model.conversations.first?.id }
+        }
+    }
+    private var sidebar: some View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
                     Image(systemName: "bubble.left.and.bubble.right.fill").font(.system(size: 24)).foregroundStyle(accent)
@@ -95,7 +120,8 @@ struct InboxView: View {
                     }
                 }.padding(16)
             }.navigationSplitViewColumnWidth(min: 260, ideal: 300, max: 380)
-        } detail: {
+    }
+    private var detail: some View {
             VStack(spacing: 0) {
                 if model.isDemo {
                     HStack {
@@ -125,26 +151,6 @@ struct InboxView: View {
                     unavailableCount: model.snapshot.unavailableCount,
                     isRefreshing: model.isLoading, lastUpdated: model.lastUpdated)
             }.frame(minWidth: 540)
-        }
-        .frame(minWidth: 900, minHeight: 620)
-        .toolbar {
-            ToolbarItemGroup {
-                Button { model.chooseDatabase() } label: { Label("Open database", systemImage: "folder") }.help("Choose another chat.db file").disabled(model.isBusy)
-                Button { model.refresh() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
-                    .disabled(model.isDemo || model.isLoading).keyboardShortcut("r", modifiers: .command)
-                Button { showHelp = true } label: { Label("Help", systemImage: "info.circle") }
-            }
-        }
-        .sheet(isPresented: $showHelp) { helpView }
-        .onChange(of: scenePhase) { phase in
-            if phase == .active { model.refreshContactNames(invalidate: true) }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .CNContactStoreDidChange)) { _ in
-            model.refreshContactNames(invalidate: true)
-        }
-        .onChange(of: model.search) { _ in
-            if !model.conversations.contains(where: { $0.id == model.selectedID }) { model.selectedID = model.conversations.first?.id }
-        }
     }
     private func permissionView(_ message: String) -> some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -386,12 +392,20 @@ struct InboxView: View {
     }
 }
 
+#if !SYNAPSE_UI_TEST
 @main
 struct SynapseApp: App {
     @StateObject private var model = InboxModel()
+    @StateObject private var telegram = TelegramModel()
+    @NSApplicationDelegateAdaptor(SynapseApplicationDelegate.self) private var appDelegate
     var body: some Scene {
-        WindowGroup("Synapse") { InboxView(model: model).tint(Color(red: 0.43, green: 0.34, blue: 0.88)) }
+        WindowGroup("Synapse") {
+            SynapseHubView(messages: model, telegram: telegram)
+                .tint(Color(red: 0.43, green: 0.34, blue: 0.88))
+                .onAppear { appDelegate.telegram = telegram }
+        }
             .defaultSize(width: 1120, height: 760)
             .commands { CommandGroup(replacing: .newItem) {} }
     }
 }
+#endif

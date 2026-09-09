@@ -37,3 +37,22 @@ env/
 
 # Source bundles distributed with versioned release checksums
 !releases/*/Synapse-*-source.zip
+
+# Local credentials, sessions, message caches, and diagnostic captures
+.env
+.env.*
+!.env.example
+*.local.json
+*.session
+*.session-*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+tdlib-data/
+telegram-data/
+credentials/
+secrets/
+codex-clipboard-*

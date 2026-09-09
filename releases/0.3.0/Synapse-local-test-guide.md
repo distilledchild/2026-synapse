@@ -1,13 +1,11 @@
-# Synapse 0.3.3 — Messages and Telegram
+# Synapse 0.3.0 — Messages and Telegram
 
 For Apple Silicon Macs running macOS 26 or later. The bundled Telegram runtime requires macOS 26.
 
 ## Telegram
 
 Select **Telegram** in the top platform selector. Enter your API ID and API hash,
-then choose **Log in with QR code**. On your phone, open Telegram → Settings →
-Devices → Link Desktop Device and scan the QR. Complete two-step verification if
-requested. Phone/code login remains available. API credentials and the database
+then complete phone/code/password verification. API credentials and the database
 key stay in macOS Keychain; codes/passwords are not saved by Synapse. The encrypted
 session database and downloaded media are outside the repository in
 `~/Library/Application Support/Synapse/Telegram`. Downloaded media files are not
@@ -21,15 +19,9 @@ and outgoing edits/reactions/deletions are not implemented. Disconnect retains
 the encrypted login session; revoke sessions in the official Telegram app when
 needed. This is an independent Telegram client.
 
-## Link previews
-
-Link thumbnails load automatically from Telegram’s local cache. When Telegram
-requires confirmation, selecting a preview shows the exact address first.
-Choose **Open link** to continue or **Cancel** to stay in Synapse.
-
 ## Install and connect Apple Messages
 
-1. Open `Synapse-0.3.3-arm64.dmg` and drag Synapse into Applications. Quit the existing app before replacing it.
+1. Open `Synapse-0.3.0-arm64.dmg` and drag Synapse into Applications. Quit the existing app before replacing it.
 2. Open Synapse and choose **Connect Messages**.
 3. If requested, enable Synapse in **System Settings → Privacy & Security → Full Disk Access**, then quit and reopen the app.
 4. Allow Messages Automation access to read participant names and send messages. Contacts access provides a fallback for names.
@@ -67,21 +59,17 @@ Existing iMessage, SMS, and RCS conversations are supported. New conversations, 
 
 ## Validation
 
-344 automated checks passed: 89 Telegram checks, 16 credential-file guard checks, plus 44 database/body checks, 54 text-send checks, 31 Contacts checks, 29 Messages-name checks, 21 history checks, 21 composer/image checks, 24 photo-send checks, and 15 status-bar layout checks.
+313 automated checks passed: 59 Telegram checks, 15 credential-file guard checks, plus 44 database/body checks, 54 text-send checks, 31 Contacts checks, 29 Messages-name checks, 21 history checks, 21 composer/image checks, 24 photo-send checks, and 15 status-bar layout checks.
 
 History checks cover scoped queries, duplicate/shared joins, exclusive cursors, equal timestamps, concurrent new messages, attachment pages, retries, stale results after disconnect, draft preservation, and retaining older pages during refresh. Original Korean and emoji text remain unchanged.
 
 The installed production app was checked with real local history: conversation loading, repeated older pages through the earliest available messages, full conversation context during search, link thumbnails, English UI, and unchanged contact names/numbers. No real messages or photos were sent during validation.
 
-Synthetic UI checks also verified thumbnail rendering, replacement with an
-uncached image, restored images, link confirmation/cancellation, and direct open
-requests. The UI fixture captures open requests without launching a browser.
-
-Telegram tests and UI checks use synthetic data, including QR decoding, token rotation, resend deadlines, two-step verification, and actual bundled TDLib startup/close. Real Telegram login and end-to-end delivery remain unverified. Other macOS versions, every attachment format, and every permission revocation path are also outside these checks.
+Telegram tests and UI checks use synthetic data, including actual bundled TDLib startup/close. Real Telegram login and end-to-end delivery remain unverified. Other macOS versions, every attachment format, and every permission revocation path are also outside these checks.
 
 ## Build from source
 
-Unzip `Synapse-0.3.3-source.zip` and run from its root:
+Unzip `Synapse-0.3.0-source.zip` and run from its root:
 
 ```sh
 bash native/scripts/test.sh

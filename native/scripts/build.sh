@@ -6,7 +6,8 @@ mkdir -p "$build_root/module-cache" "$build_root/Synapse.app/Contents/MacOS" "$b
 swiftc -module-cache-path "$build_root/module-cache" -target arm64-apple-macosx13.0 -O -parse-as-library \
     "$source_root/Sources/MessageStore.swift" "$source_root/Sources/SendTypes.swift" "$source_root/Sources/PhotoFile.swift" "$source_root/Sources/ContactNames.swift" \
     "$source_root/Sources/MessageSender.swift" "$source_root/Sources/MessageNames.swift" "$source_root/Sources/InboxModel.swift" "$source_root/Sources/MessageComposer.swift" "$source_root/Sources/AttachmentPreview.swift" "$source_root/Sources/OutgoingPhotoPreview.swift" "$source_root/Sources/InboxStatusBar.swift" "$source_root/Sources/SynapseApp.swift" \
-    -o "$build_root/Synapse.app/Contents/MacOS/Synapse" -framework SwiftUI -framework AppKit -framework Contacts -lsqlite3
+    "$source_root/Sources/SynapseHubView.swift" "$source_root"/Sources/Telegram/*.swift \
+    -o "$build_root/Synapse.app/Contents/MacOS/Synapse" -framework SwiftUI -framework AppKit -framework Contacts -framework Security -lsqlite3
 cp "$source_root/Resources/Info.plist" "$build_root/Synapse.app/Contents/Info.plist"
 swiftc -module-cache-path "$build_root/module-cache" -target arm64-apple-macosx13.0 -O -parse-as-library \
     "$source_root/Sources/SendTypes.swift" "$source_root/Sources/PhotoFile.swift" "$source_root/Sources/SenderHelper.swift" \
@@ -17,5 +18,6 @@ swiftc -module-cache-path "$build_root/module-cache" -target arm64-apple-macosx1
 swift -module-cache-path "$build_root/module-cache" "$source_root/scripts/make-icon.swift" "$build_root/AppIcon.iconset" "$build_root/Synapse.app/Contents/Resources/AppIcon.icns"
 codesign --force --sign - --timestamp=none --options runtime --entitlements "$source_root/Resources/SynapseSender.entitlements" "$build_root/Synapse.app/Contents/MacOS/SynapseSender"
 codesign --force --sign - --timestamp=none --options runtime --entitlements "$source_root/Resources/SynapseSender.entitlements" "$build_root/Synapse.app/Contents/MacOS/SynapseNames"
+python3 "$source_root/scripts/bundle-telegram.py" "$build_root/Synapse.app"
 codesign --force --sign - --timestamp=none --options runtime --entitlements "$source_root/Resources/Synapse.entitlements" "$build_root/Synapse.app"
 codesign --verify --deep --strict "$build_root/Synapse.app"

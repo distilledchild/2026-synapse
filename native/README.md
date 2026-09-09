@@ -1,3 +1,7 @@
+# Synapse native app — 0.3.3
+
+Telegram integration is documented in [TELEGRAM.md](TELEGRAM.md). The current binary targets Apple Silicon/macOS 26+. API credentials stay in Keychain; personal data stays outside Git.
+
 # Synapse native local alpha
 
 2026-09-07 · 0.2.7 · Apple 메시지 읽기·텍스트/사진 전송 macOS 앱.

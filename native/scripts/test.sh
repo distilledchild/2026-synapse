@@ -49,3 +49,4 @@ swiftc -module-cache-path "$build_root/module-cache" -target arm64-apple-macosx1
     "$source_root/Sources/ContactNames.swift" "$source_root/Sources/MessageSender.swift" "$source_root/Sources/MessageNames.swift" "$source_root/Sources/InboxModel.swift" \
     "$source_root/Tests/PhotoTests.swift" -o "$build_root/photo-tests" -framework SwiftUI -framework AppKit -framework Contacts -lsqlite3
 "$build_root/photo-tests" "$build_root/photo-helper-tests"
+bash "$source_root/scripts/test-telegram.sh" "$build_root"

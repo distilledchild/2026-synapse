@@ -202,3 +202,56 @@ DMG 직접 배포는 다른 서비스의 권한·정책을 우회하는 근거�
 - [Slack Events API](https://docs.slack.dev/apis/events-api/): 이벤트 수신은 OAuth scope와 접근 가능한 대화에 종속.
 - [TDLib 시작 안내](https://core.telegram.org/tdlib/getting-started): 클라이언트 구성과 애플리케이션 인증 정보 준비.
 - [Tauri Capabilities](https://tauri.app/security/capabilities/): 창/WebView에 허용할 명령과 권한 범위를 설계하는 근거.
+
+
+## 2026-09-08: Telegram local alpha implementation
+
+The active native implementation now includes a TDLib 1.8.67 adapter on the
+`codex/telegram` branch. Messages, Telegram, and All share the existing native
+window. Telegram provides main-list cloud chats, official names, history, live
+updates, text/photo sending, and loaded-message search. Authentication UI uses
+Keychain-backed API credentials and a private encrypted session database outside
+the repository. The first binary requires macOS 26 because of its bundled native
+dependencies. No user keys are included in source or release artifacts.
+
+Current verification: 239 existing checks, 59 Telegram checks, 15 sensitive-file
+guard checks, and synthetic UI inspection. Actual account authentication and
+end-to-end delivery still require user validation. See `native/TELEGRAM.md` for
+supported behavior, boundaries, and the pinned dependency build.
+
+## 2026-09-08: Telegram QR login correction (0.3.1)
+
+The initial code-only login omitted QR authorization and discarded Telegram's
+delivery metadata. Phone and verification screens now offer QR login, render
+rotating TDLib tokens locally, and transition to two-step verification after
+approval. Code screens describe the actual delivery method and enable a resend
+only when the server permits it. QR tokens never enter logs or files; the Git
+guard rejects token literals. 336 checks passed (239 existing, 81 Telegram,
+16 sensitive-file checks), including an actual QR decoder against synthetic
+tokens. Synthetic UI inspection confirmed the code-to-QR transition. Real QR
+approval and message delivery remain user validation steps.
+
+## 2026-09-08: Telegram profile photos & link preview cards (0.3.2)
+
+Resolved Telegram avatar rendering where avatars previously fell back to initials.
+TDLib stores profile photos in `database/profile_photos`, which was blocked by the
+strict `files/` root path check; broadened image loader root permissions to the
+private app sandbox while maintaining external path protection. Added rich link
+preview cards (`TelegramLinkPreviewCard`) displaying page thumbnail, site name,
+title, description, and direct browser navigation for URLs shared in messages.
+All 336 test checks passed.
+
+## 2026-09-08: Link preview regression fixes (0.3.3)
+
+A conditional-only Group prevented the first thumbnail task from starting. The
+thumbnail now has an initial container and placeholder, tracks file identity and
+cache path, and clears stale images on replacement. Link cards now preserve
+TDLib's skip_confirmation flag and capture the exact URL in a confirmation sheet
+before opening hidden destinations. Cancel opens nothing; explicit confirmation
+opens the captured URL once. Display labels and non-web schemes are not opened.
+
+344 checks passed (239 existing, 89 Telegram, 16 sensitive-file checks). Synthetic
+UI regression checks verified cached thumbnails, uncached replacement/restoration,
+confirmation, cancellation, and direct-open behavior. No actual messages were
+sent and no browser destination was opened by these tests. Version 0.3.3 build 16
+is packaged as an Apple Silicon/macOS 26+ DMG.

@@ -1,0 +1,3 @@
+b2ef21ac2a7de35493efb5779f4f72d2521e4334bb9b8724bbc20d5a1612cb00  Synapse-0.3.2-arm64.dmg
+6070af52082a11aac8c1df91a078f636cb9aa5d0867a2feb262f1cef5b3d1727  Synapse-0.3.2-source.zip
+3a350fa2c793fbe735446cac892e1b0c137f7098ecb0bbdcd57eb225246540af  Synapse-local-test-guide.md

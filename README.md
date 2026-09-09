@@ -2,10 +2,13 @@
 
 여러 메신저의 대화를 하나의 macOS 데스크톱 앱에서 확인·검색하고, 지원 가능한 범위에서 답장하기 위한 로컬 우선 통합 메시징 프로젝트입니다.
 
-**현재 상태: Apple 메시지 읽기·텍스트/사진 전송 로컬 알파 0.2.10.** 영어 UI, 대화별 과거 기록 로딩, 검색 중 전체 대화 표시, 기본 한 줄·자동 확장 입력창, Enter 전송·Shift+Enter 줄바꿈, 첨부 사진·링크 썸네일 미리보기를 지원합니다. 연락처 이름·이니셜도 표시합니다. 기존 iMessage·SMS·RCS 대화의 작성창, 대화별 초안, Apple 메시지 앱을 통한 텍스트·사진 전송을 구현했습니다. SwiftUI 앱과 테스트는 `native/`, 설치 파일·소스·안내서는 `releases/0.2.10/`에 있습니다. 실제 계정 발신과 자동화 권한 승인은 사용자 테스트가 필요합니다. 새 대화·동영상/일반 파일 전송·수정·삭제는 미지원입니다.
+**현재 개발 상태: Telegram 통합 로컬 알파 0.3.3.** 링크 썸네일 로딩·URL 확인 창 수정, 프로필 사진 렌더링 수정, 웹 링크 미리보기 카드(Link Preview), QR 로그인·인증번호 발송 경로 안내, Messages·Telegram·All 전환, 기존 Telegram 대화 이름·기록·실시간 수신·텍스트/사진 전송, 로드된 대화 통합 검색을 구현했습니다. 기존 Apple 메시지 기능도 유지합니다. 실제 Telegram 로그인과 배달은 사용자 검증 전입니다. 최신 로컬 빌드는 Apple Silicon/macOS 26 이상이며, 이전 문자 전용 0.2.10도 아래에 보관합니다.
 
-- [설치 파일](releases/0.2.10/Synapse-0.2.10-arm64.dmg)
-- [설치 안내](releases/0.2.10/Synapse-local-test-guide.md)
+Telegram 연결·개인정보 보관·빌드 방법: [native/TELEGRAM.md](native/TELEGRAM.md). API 값은 앱에서 입력해 Keychain에 저장하며 Git·릴리스에 포함하지 않습니다.
+
+- [0.3.3 설치 파일 · Messages + Telegram](releases/0.3.3/Synapse-0.3.3-arm64.dmg)
+- [0.3.3 설치 안내](releases/0.3.3/Synapse-local-test-guide.md)
+- [이전 문자 전용 0.2.10](releases/0.2.10/Synapse-0.2.10-arm64.dmg)
 - [앱 소스와 재빌드 방법](native/README.md)
 
 ## 제품 방향
@@ -26,7 +29,7 @@
 | 순서 | 대상 | 계획 상태 |
 |---|---|---|
 | 첫 로컬 알파 | iMessage/SMS/RCS | 열람·검색·자동 갱신, 기존 대화 텍스트 전송 구현; 실제 배달 검증 필요 |
-| 다음 플랫폼 | Telegram | 미구현 |
+| 새 로컬 알파 | Telegram | 클라우드 대화·이력·이름·텍스트/사진·통합 검색 구현; 실제 로그인/배달 검증 전 |
 | 우선 확장 | Slack, Discord | Slack은 승인 범위; Discord는 공식 봇 모드만 검토 |
 | 후속 후보 | WhatsApp, Instagram, Facebook Messenger, X, Threads, TikTok, Twitch, KakaoTalk, LINE, Signal, LinkedIn | 접근 가능성·인증·배포 조건 검증 후 채택 |
 
